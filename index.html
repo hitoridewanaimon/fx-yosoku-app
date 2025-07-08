@@ -1,42 +1,100 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <title>ドル円予測くん</title>
-</head>
-<body>
-  <h1>ドル円予測くん</h1>
-  <p>現在のドル円: <span id="rate">取得中...</span></p>
-  <p>予測: <span id="signal">判定中...</span></p>
+<script>
+  async function fetchRateAndPredict() {
+    try {
+      const API_KEY = "CDE2C8FE0C2047879C2448B3C902F8F1"; // ★ここにあなたのAPIキーを貼り付け！
 
-  <script>
-    async function fetchRate() {
-      try {
-        const API_KEY ="cde2c8fe0c2047879c2448b3c902f8f1"; // あなたのAPIキー
-        const url = `https://api.twelvedata.com/price?symbol=USD/JPY&apikey=${API_KEY}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        console.log("APIの中身:", data); // 
-        const price = parseFloat(data.price);
+      // 1. TwelveDataから過去の時系列データを取得 (USD/JPY, 終値, 30期間)
+      // interval='1min' で1分足、outputsize=30 で過去30個のデータ
+      const historicalUrl = `https://api.twelvedata.com/time_series?symbol=USD/JPY&interval=1min&outputsize=30&apikey=${API_KEY}`;
+      const historicalRes = await fetch(historicalUrl);
+      const historicalData = await historicalRes.json();
 
-        document.getElementById("rate").innerText = price;
-
-        const fakeHistory = [150.1, 150.3, 150.2, 150.5, price];
-        const avg = fakeHistory.reduce((a, b) => a + b, 0) / fakeHistory.length;
-
-        let signal = "様子見";
-        if (price > avg) signal = "買い";
-        else if (price < avg) signal = "売り";
-
-        document.getElementById("signal").innerText = signal;
-      } catch (error) {
+      // エラーチェック (APIキーが無効など)
+      if (historicalData.status === "error") {
         document.getElementById("rate").innerText = "取得失敗";
-        document.getElementById("signal").innerText = "エラー";
-        console.error(error);
+        document.getElementById("signal").innerText = "エラー: " + historicalData.message;
+        console.error("APIエラー:", historicalData.message);
+        return; // エラーならここで処理を終了
       }
-    }
 
-    fetchRate();
-  </script>
-</body>
-</html>
+      // 終値（close price）の配列を作成
+      // 最新のデータが配列の最初に来るので、reverse()で時系列順にする
+      const prices = historicalData.values.map(item => parseFloat(item.close)).reverse();
+
+      // 十分なデータがなければエラー表示
+      if (prices.length < 20) { // SMA(20)を計算するため最低20個のデータが必要
+        document.getElementById("rate").innerText = "データ不足";
+        document.getElementById("signal").innerText = "予測不可: データが足りません";
+        console.error("データ不足:", prices.length);
+        return;
+      }
+
+      // 2. SMA（単純移動平均線）を計算する関数
+      function calculateSMA(data, period) {
+        const sma = [];
+        for (let i = period - 1; i < data.length; i++) {
+          const slice = data.slice(i - period + 1, i + 1);
+          const sum = slice.reduce((a, b) => a + b, 0);
+          sma.push(sum / period);
+        }
+        return sma;
+      }
+
+      // 期間を設定
+      const shortPeriod = 5; // 短期SMA
+      const longPeriod = 20; // 長期SMA
+
+      // SMAを計算
+      const shortSMAs = calculateSMA(prices, shortPeriod);
+      const longSMAs = calculateSMA(prices, longPeriod);
+
+      // 最新のSMA値を取得
+      const latestShortSMA = shortSMAs[shortSMAs.length - 1];
+      const latestLongSMA = longSMAs[longSMAs.length - 1];
+
+      // 現在の価格
+      const currentPrice = prices[prices.length - 1];
+
+      document.getElementById("rate").innerText = currentPrice.toFixed(3); // 小数点以下3桁に整形
+
+      // 3. ゴールデンクロス/デッドクロスによる予測ロジック
+      let signal = "様子見";
+
+      // SMAのデータが十分にあるか確認
+      if (shortSMAs.length >= 2 && longSMAs.length >= 2) {
+        const prevShortSMA = shortSMAs[shortSMAs.length - 2];
+        const prevLongSMA = longSMAs[longSMAs.length - 2];
+
+        // ゴールデンクロス（短期が長期を下から上に抜ける）
+        if (prevShortSMA < prevLongSMA && latestShortSMA >= latestLongSMA) {
+          signal = "買い（ゴールデンクロス）";
+        }
+        // デッドクロス（短期が長期を上から下に抜ける）
+        else if (prevShortSMA > prevLongSMA && latestShortSMA <= latestLongSMA) {
+          signal = "売り（デッドクロス）";
+        }
+        // クロスはしていないが、現在の短期SMAが長期SMAより上なら買い優勢
+        else if (latestShortSMA > latestLongSMA) {
+          signal = "買い優勢";
+        }
+        // クロスはしていないが、現在の短期SMAが長期SMAより下なら売り優勢
+        else if (latestShortSMA < latestLongSMA) {
+          signal = "売り優勢";
+        }
+      }
+
+      document.getElementById("signal").innerText = signal;
+
+    } catch (error) {
+      document.getElementById("rate").innerText = "取得失敗";
+      document.getElementById("signal").innerText = "エラーが発生しました";
+      console.error("fetchRateAndPredictエラー:", error);
+    }
+  }
+
+  // 10秒ごとにAPIを叩いて更新 (無料プランの制限に注意)
+  // 無料プランでは1分間に8回などの制限があるので、実際の運用では注意
+  fetchRateAndPredict(); // 初回実行
+  setInterval(fetchRateAndPredict, 10000); // 10秒ごとに実行
+
+</script>
