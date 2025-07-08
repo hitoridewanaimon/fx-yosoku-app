@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>ドル円予測くん</title>
+</head>
+<body>
+  <h1>ドル円予測くん</h1>
+  <p>現在のドル円: <span id="rate">取得中...</span></p>
+  <p>予測: <span id="signal">判定中...</span></p>
+
+  <script>
+    async function fetchRate() {
+      try {
+        const API_KEY ="cde2c8fe0c2047879c2448b3c902f8f1"; // あなたのAPIキー
+        const url = `https://api.twelvedata.com/price?symbol=USD/JPY&apikey=${API_KEY}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        console.log("APIの中身:", data); // 
+        const price = parseFloat(data.price);
+
+        document.getElementById("rate").innerText = price;
+
+        const fakeHistory = [150.1, 150.3, 150.2, 150.5, price];
+        const avg = fakeHistory.reduce((a, b) => a + b, 0) / fakeHistory.length;
+
+        let signal = "様子見";
+        if (price > avg) signal = "買い";
+        else if (price < avg) signal = "売り";
+
+        document.getElementById("signal").innerText = signal;
+      } catch (error) {
+        document.getElementById("rate").innerText = "取得失敗";
+        document.getElementById("signal").innerText = "エラー";
+        console.error(error);
+      }
+    }
+
+    fetchRate();
+  </script>
+</body>
+</html>
