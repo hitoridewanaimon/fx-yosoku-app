@@ -172,7 +172,7 @@
     // 10秒ごとにAPIを叩いて更新 (無料プランの制限に注意)
     // 無料プランでは1分間に8回などの制限があるので、実際の運用では注意
     fetchRateAndPredict(); // 初回実行
-    setInterval(fetchRateAndPredict, 10000); // 10秒ごとに実行
+    setInterval(fetchRateAndPredict, 60000); // 60秒ごとに実行
 
   </script>
 </body>
