@@ -3,6 +3,72 @@
 <head>
   <meta charset="UTF-8" />
   <title>ドル円予測くん</title>
+  <style>
+    /* 全体的なスタイル */
+    body {
+      background-color: #000; /* 背景色を黒に設定 */
+      color: #fff; /* デフォルトの文字色を白に設定（見やすくするため） */
+      font-family: 'Arial', sans-serif; /* フォントを指定（Netflixロゴは専用フォントですが、汎用的なもの） */
+      display: flex; /* Flexboxを使って中央寄せ */
+      flex-direction: column; /* 要素を縦方向に並べる */
+      justify-content: center; /* 垂直方向の中央寄せ */
+      align-items: center; /* 水平方向の中央寄せ */
+      min-height: 100vh; /* ページの高さ全体を使う */
+      margin: 0; /* デフォルトのマージンをリセット */
+      padding: 20px; /* 全体に少し余白 */
+      box-sizing: border-box; /* パディングを幅に含める */
+    }
+
+    /* タイトル（ドル円予測くん） */
+    h1 {
+      font-size: 3.5em; /* タイトルを大きく */
+      color: #E50914; /* Netflixのロゴに近い赤色（マゼンタと区別するため） */
+      text-align: center;
+      margin-bottom: 30px; /* 下に少し余白 */
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* 影をつけて立体感を出す */
+    }
+
+    /* 現在のドル円と予測の段落 */
+    p {
+      font-size: 1.8em; /* テキストを大きく */
+      text-align: center;
+      margin: 15px 0; /* 上下に余白 */
+      color: #eee; /* 少し明るい白 */
+    }
+
+    /* レートの数値（現在のドル円の数字） */
+    #rate {
+      font-size: 3em; /* レートの数値をさらに大きく */
+      font-weight: bold; /* 太字 */
+      color: #FF00FF; /* マゼンタ */
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); /* 影 */
+    }
+
+    /* 予測シグナル（買い優勢、売り優勢など） */
+    #signal {
+      font-size: 2.5em; /* 予測シグナルを大きく */
+      font-weight: bold; /* 太字 */
+      color: #FF00FF; /* マゼンタ */
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); /* 影 */
+    }
+
+    /* 小さな画面での調整 */
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 2.5em;
+      }
+      p {
+        font-size: 1.5em;
+      }
+      #rate {
+        font-size: 2.5em;
+      }
+      #signal {
+        font-size: 2em;
+      }
+    }
+
+  </style>
 </head>
 <body>
   <h1>ドル円予測くん</h1>
